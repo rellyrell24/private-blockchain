@@ -74,6 +74,7 @@ class Blockchain {
                 block.height = newHeight
                 block.time = new Date().getTime().toString().slice(0, -3);
                 this.chain.push(block);
+                await this.validateChain();
                 this.height = newHeight
                 resolve(block)
             } catch {
