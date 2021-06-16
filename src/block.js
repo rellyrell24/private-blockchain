@@ -39,12 +39,15 @@ class Block {
         let self = this;
         return new Promise((resolve, reject) => {
             // Save in auxiliary variable the current block hash
-            aux_hash = this.hash;
+            const aux_hash = self.hash;
+            self.hash = "";
             // Recalculate the hash of the Block
             // Comparing if the hashes changed
             // Returning the Block is not valid
-            if (aux_hash != CryptoJS.SHA256(this)) {
-                resolve(false);
+            const new_hash = SHA256(JSON.stringify(self)).toString();
+            self.hash = aux_hash;
+            if (aux_hash !== new_hash) {
+                reject(Error("Error with validation"))
             }
             // Returning the Block is valid
             resolve(true);

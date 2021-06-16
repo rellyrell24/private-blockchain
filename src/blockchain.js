@@ -66,12 +66,12 @@ class Blockchain {
         return new Promise(async (resolve, reject) => {
             try {
                 const newHeight = this.height + 1;
+                block.height = newHeight
                 if (newHeight > 0 ) {
                     const prevBlock = await this.getBlockByHeight(newHeight - 1);
                     block.previousBlockHash = prevBlock.hash;
                 }
                 block.hash = SHA256(JSON.stringify(block)).toString();
-                block.height = newHeight
                 block.time = new Date().getTime().toString().slice(0, -3);
                 this.chain.push(block);
                 await this.validateChain();
@@ -93,7 +93,7 @@ class Blockchain {
      */
     requestMessageOwnershipVerification(address) {
         return new Promise((resolve) => {
-            timestamp = new Date().getTime().toString().slice(0,-3);
+            var timestamp = new Date().getTime().toString().slice(0,-3);
             resolve(`${address}:${timestamp}:starRegistry`);
         });
     }
@@ -119,15 +119,18 @@ class Blockchain {
         let self = this;
         return new Promise(async (resolve, reject) => {
             try {
-                timestamp = parseInt(message.split(":")[1])
-                currentTime = parseInt(new Date().getTime().toString().slice(0,-3));
-                timediff = (currentTime - timestamp) / 1000;
-                var seconds = Math.round(timeDiff);
-                if (seconds <= 300) {
-                    bitcoinMessage.verify(message, address, signature)
-                    let newBlock = new BlockClass.Block({star:star,owner:address});
+                var timestamp = parseInt(message.split(":")[1])
+                var currentTime = parseInt(new Date().getTime().toString().slice(0,-3));
+                var timeDiff = (currentTime - timestamp);
+                if (timeDiff < 300) {
+                    if (!bitcoinMessage.verify(message, address, signature)) {
+                        return reject(new Error("Unable to verify bitcoin message"));
+                    }
+                    let newBlock = new BlockClass.Block({owner : address,star: star});
                     let resBlock = await self._addBlock(newBlock);
                     resolve(resBlock)
+                } else {
+                    return reject(new Error("Time exceeded, make new message and signature"));
                 }
             } catch {
                 reject(Error("Failed to submit star"));
@@ -202,8 +205,9 @@ class Blockchain {
     validateChain() {
         let self = this;
         let errorLog = [];
+        var i;
         return new Promise(async (resolve, reject) => {
-            for (i = 0; i<self.chain.length; i++) {
+            for (i = 1; i<self.chain.length; i++) {
                 const currBlock = self.chain[i];
                 if( !(await currBlock.validate())) {
                     errorLog.push({
@@ -211,7 +215,6 @@ class Blockchain {
                         block: currBlock
                     });
                 }
-                if ( i === 0) continue;
                 const prevBlock = self.chain[i-1];
                 if (currBlock.previousBlockHash !== prevBlock.hash) {
                     errorLog.push({
