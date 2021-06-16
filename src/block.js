@@ -47,7 +47,7 @@ class Block {
             const new_hash = SHA256(JSON.stringify(self)).toString();
             self.hash = aux_hash;
             if (aux_hash !== new_hash) {
-                reject(Error("Error with validation"))
+                resolve(false);
             }
             // Returning the Block is valid
             resolve(true);

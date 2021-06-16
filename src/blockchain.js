@@ -73,10 +73,12 @@ class Blockchain {
                 }
                 block.time = new Date().getTime().toString().slice(0, -3);
                 block.hash = SHA256(JSON.stringify(block)).toString();
-                self.chain.push(block);
-                await self.validateChain();
-                self.height = newHeight
-                resolve(block)
+                var errs = await self.validateChain();
+                if (errs.length == 0){
+                    self.chain.push(block);
+                    self.height = newHeight;
+                    resolve(block);
+                } else reject(Erro("Blockchain has errors"));
             } catch {
                 reject(Error("Failed to add block"))
             }
