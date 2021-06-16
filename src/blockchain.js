@@ -65,17 +65,17 @@ class Blockchain {
         let self = this;
         return new Promise(async (resolve, reject) => {
             try {
-                const newHeight = this.height + 1;
+                const newHeight = self.height + 1;
                 block.height = newHeight
                 if (newHeight > 0 ) {
-                    const prevBlock = await this.getBlockByHeight(newHeight - 1);
+                    const prevBlock = await self.getBlockByHeight(newHeight - 1);
                     block.previousBlockHash = prevBlock.hash;
                 }
                 block.time = new Date().getTime().toString().slice(0, -3);
                 block.hash = SHA256(JSON.stringify(block)).toString();
-                this.chain.push(block);
-                await this.validateChain();
-                this.height = newHeight
+                self.chain.push(block);
+                await self.validateChain();
+                self.height = newHeight
                 resolve(block)
             } catch {
                 reject(Error("Failed to add block"))
@@ -189,8 +189,10 @@ class Blockchain {
         let stars = [];
         return new Promise((resolve, reject) => {
             self.chain.forEach(async(block) => {
-                let data = await block.getBData();
-                if (data.owner === address) stars.push(data);
+                let data = block.getBData();
+                if (data) {
+                    if (data.owner === address) stars.push(data);
+                }
             });
             resolve(stars)
         });
@@ -207,7 +209,7 @@ class Blockchain {
         let errorLog = [];
         var i;
         return new Promise(async (resolve, reject) => {
-            for (i = 1; i<self.chain.length; i++) {
+            for (i = 0; i<self.chain.length; i++) {
                 const currBlock = self.chain[i];
                 if( !(await currBlock.validate())) {
                     errorLog.push({
@@ -215,6 +217,7 @@ class Blockchain {
                         block: currBlock
                     });
                 }
+                if (i == 0) continue;
                 const prevBlock = self.chain[i-1];
                 if (currBlock.previousBlockHash !== prevBlock.hash) {
                     errorLog.push({

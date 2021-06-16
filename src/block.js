@@ -40,7 +40,7 @@ class Block {
         return new Promise((resolve, reject) => {
             // Save in auxiliary variable the current block hash
             const aux_hash = self.hash;
-            self.hash = "";
+            self.hash = null;
             // Recalculate the hash of the Block
             // Comparing if the hashes changed
             // Returning the Block is not valid
@@ -67,12 +67,10 @@ class Block {
         // Getting the encoded data saved in the Block
         // Decoding the data to retrieve the JSON representation of the object
         // Parse the data to an object to be retrieve.
-        parsed_json = JSON.parse(hex2ascii(this.body));
+        var parsed_json = JSON.parse(hex2ascii(this.body));
         // Resolve with the data if the object isn't the Genesis block
         if (this.previousBlockHash != null) {
-            resolve(parsed_json);
-        } else {
-            Error("Attempted to return data from genesis block")
+            return parsed_json;
         }
     }
 
